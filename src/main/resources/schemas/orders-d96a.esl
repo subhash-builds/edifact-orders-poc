@@ -1,0 +1,121 @@
+form: EDIFACT
+version: 'D96A'
+structures:
+- id: ORDERS
+  name: Purchase order
+  heading:
+  - { idRef: BGM, position: '0020', usage: M }
+  - { idRef: DTM, position: '0030', usage: M, count: 5 }
+  - { idRef: NAD, position: '0040', usage: M, count: 5 }
+  - { idRef: CUX, position: '0050', usage: M }
+  detail:
+  - groupId: LineItem
+    position: '0100'
+    usage: M
+    count: 200
+    items:
+    - { idRef: LIN, position: '0110', usage: M }
+    - { idRef: QTY, position: '0120', usage: M }
+    - { idRef: PRI, position: '0130', usage: M }
+  summary:
+  - { idRef: UNS, position: '0200', usage: M }
+  - { idRef: CNT, position: '0210', usage: C }
+segments:
+- id: BGM
+  name: Beginning of message
+  elements:
+  - { idRef: C002, position: '010', usage: C }
+  - { idRef: C106, position: '020', usage: C }
+  - { id: '1225', name: Message function code, type: AN, minLength: 1, maxLength: 3, usage: C, position: '030' }
+- id: DTM
+  name: Date time period
+  elements:
+  - { idRef: C507, position: '010', usage: M }
+- id: NAD
+  name: Name and address
+  elements:
+  - { id: '3035', name: Party function code qualifier, type: AN, minLength: 1, maxLength: 3, usage: M, position: '010' }
+  - { idRef: C082, position: '020', usage: C }
+  - { idRef: C058, position: '030', usage: C }
+  - { idRef: C080, position: '040', usage: C }
+- id: CUX
+  name: Currencies
+  elements:
+  - { idRef: C504, position: '010', usage: M }
+- id: LIN
+  name: Line item
+  elements:
+  - { id: '1082', name: Line item identifier, type: AN, minLength: 1, maxLength: 6, usage: C, position: '010' }
+  - { id: '1229', name: Action request code, type: AN, minLength: 1, maxLength: 3, usage: C, position: '020' }
+  - { idRef: C212, position: '030', usage: C }
+- id: QTY
+  name: Quantity
+  elements:
+  - { idRef: C186, position: '010', usage: M }
+- id: PRI
+  name: Price details
+  elements:
+  - { idRef: C509, position: '010', usage: C }
+- id: UNS
+  name: Section control
+  elements:
+  - { id: '0081', name: Section identification, type: AN, minLength: 1, maxLength: 1, usage: M, position: '010' }
+- id: CNT
+  name: Control total
+  elements:
+  - { idRef: C270, position: '010', usage: M }
+composites:
+- id: C002
+  name: Document message name
+  elements:
+  - { id: '1001', name: Document name code, type: AN, minLength: 1, maxLength: 3, usage: C }
+- id: C106
+  name: Document message identification
+  elements:
+  - { id: '1004', name: Document identifier, type: AN, minLength: 1, maxLength: 35, usage: C }
+- id: C507
+  name: Date time period
+  elements:
+  - { id: '2005', name: Date qualifier, type: AN, minLength: 1, maxLength: 3, usage: M }
+  - { id: '2380', name: Date value, type: AN, minLength: 1, maxLength: 35, usage: C }
+  - { id: '2379', name: Date format code, type: AN, minLength: 1, maxLength: 3, usage: C }
+- id: C082
+  name: Party identification details
+  elements:
+  - { id: '3039', name: Party identifier, type: AN, minLength: 1, maxLength: 35, usage: C }
+  - { id: '1131', name: Code list identification code, type: AN, minLength: 1, maxLength: 17, usage: C }
+  - { id: '3055', name: Code list responsible agency code, type: AN, minLength: 1, maxLength: 3, usage: C }
+- id: C058
+  name: Name and address
+  elements:
+  - { id: '3124', name: Name and address description, type: AN, minLength: 1, maxLength: 35, usage: C }
+- id: C080
+  name: Party name
+  elements:
+  - { id: '3036', name: Party name, type: AN, minLength: 1, maxLength: 35, usage: C }
+- id: C504
+  name: Currency details
+  elements:
+  - { id: '6347', name: Currency usage code qualifier, type: AN, minLength: 1, maxLength: 3, usage: M }
+  - { id: '6345', name: Currency identification code, type: AN, minLength: 1, maxLength: 3, usage: C }
+  - { id: '6343', name: Currency type code qualifier, type: AN, minLength: 1, maxLength: 3, usage: C }
+- id: C212
+  name: Item number identification
+  elements:
+  - { id: '7140', name: Item identifier, type: AN, minLength: 1, maxLength: 35, usage: C }
+  - { id: '7143', name: Item type identification code, type: AN, minLength: 1, maxLength: 3, usage: C }
+- id: C186
+  name: Quantity details
+  elements:
+  - { id: '6063', name: Quantity type code qualifier, type: AN, minLength: 1, maxLength: 3, usage: M }
+  - { id: '6060', name: Quantity, type: AN, minLength: 1, maxLength: 35, usage: M }
+- id: C509
+  name: Price information
+  elements:
+  - { id: '5125', name: Price code qualifier, type: AN, minLength: 1, maxLength: 3, usage: M }
+  - { id: '5118', name: Price amount, type: AN, minLength: 1, maxLength: 15, usage: C }
+- id: C270
+  name: Control
+  elements:
+  - { id: '6069', name: Control total type code qualifier, type: AN, minLength: 1, maxLength: 3, usage: M }
+  - { id: '6066', name: Control total value, type: AN, minLength: 1, maxLength: 18, usage: M }

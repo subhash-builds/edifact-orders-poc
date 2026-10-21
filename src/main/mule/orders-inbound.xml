@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file"
+      xmlns:edifact="http://www.mulesoft.org/schema/mule/edifact"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+        http://www.mulesoft.org/schema/mule/edifact http://www.mulesoft.org/schema/mule/edifact/current/mule-edifact.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <flow name="orders-from-edifact">
+        <http:listener config-ref="HTTP_Listener_config" path="/orders/from-edifact" allowedMethods="GET">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[{'Content-Type': 'application/json'}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+            </http:error-response>
+        </http:listener>
+        <set-variable variableName="sourceFile" value="#[attributes.queryParams.file default '']"/>
+        <choice>
+            <when expression="#[vars.sourceFile == 'orders-accepted.edi' or vars.sourceFile == 'orders-rejected.edi']">
+                <set-variable variableName="baseName" value="#[(vars.sourceFile splitBy '.')[0]]"/>
+                <set-payload value="#[readUrl('classpath://samples/' ++ vars.sourceFile, 'text/plain')]"/>
+                <edifact:read config-ref="EDIFACT_Config" doc:name="Read ORDERS"/>
+                <ee:transform doc:name="Map purchase order">
+                    <ee:variables>
+                        <ee:set-variable variableName="order" resource="dw/purchase-order.dwl"/>
+                    </ee:variables>
+                </ee:transform>
+                <file:write config-ref="Order_File_Config" path="#['outbox/' ++ vars.baseName ++ '.json']">
+                    <file:content>#[output application/json --- vars.order]</file:content>
+                </file:write>
+                <file:write config-ref="Order_File_Config" path="#['outbox/' ++ vars.baseName ++ '.xml']">
+                    <file:content>#[output application/xml --- { purchaseOrder: vars.order }]</file:content>
+                </file:write>
+                <ee:transform doc:name="HTTP response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    sourceFile: vars.sourceFile,
+    order: vars.order,
+    files: {
+        json: "outbox/" ++ vars.baseName ++ ".json",
+        xml: "outbox/" ++ vars.baseName ++ ".xml"
+    }
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+            <otherwise>
+                <set-variable variableName="httpStatus" value="400"/>
+                <ee:transform doc:name="Unknown sample">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    message: "Unknown sample file. Use orders-accepted.edi or orders-rejected.edi."
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </otherwise>
+        </choice>
+        <error-handler ref="orders-error-handler"/>
+    </flow>
+</mule>

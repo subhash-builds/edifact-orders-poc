@@ -1,0 +1,10 @@
+http:
+  host: "0.0.0.0"
+  port: "8081"
+
+file:
+  baseDir: "C:/Work/01_Projects/impact/practice/data"
+
+rules:
+  currency: "PHP"
+  creditLimit: "100000"

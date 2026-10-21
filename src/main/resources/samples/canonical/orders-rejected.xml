@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<purchaseOrder>
+  <sender>HARBOR</sender>
+  <receiver>NORTHWIND</receiver>
+  <messageReference>2</messageReference>
+  <poNumber>PO-1002</poNumber>
+  <orderDate>20261021</orderDate>
+  <requestedDeliveryDate>20261120</requestedDeliveryDate>
+  <buyer>
+    <id>HARBOR</id>
+    <name>Harbor Retail</name>
+  </buyer>
+  <supplier>
+    <id>NORTHWIND</id>
+    <name>Northwind Telecom Supplies</name>
+  </supplier>
+  <currency>PHP</currency>
+  <lines>
+    <lineNumber>1</lineNumber>
+    <itemId>SKU100</itemId>
+    <quantity>0</quantity>
+    <unitPrice>500</unitPrice>
+    <lineAmount>0</lineAmount>
+  </lines>
+  <lines>
+    <lineNumber>2</lineNumber>
+    <itemId>SKU900</itemId>
+    <quantity>200</quantity>
+    <unitPrice>1000</unitPrice>
+    <lineAmount>200000</lineAmount>
+  </lines>
+  <orderTotal>200000</orderTotal>
+  <status>REJECTED</status>
+  <reasons>INVALID_QUANTITY</reasons>
+  <reasons>CREDIT_LIMIT_EXCEEDED</reasons>
+</purchaseOrder>

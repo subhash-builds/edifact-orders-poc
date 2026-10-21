@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file"
+      xmlns:edifact="http://www.mulesoft.org/schema/mule/edifact"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+        http://www.mulesoft.org/schema/mule/edifact http://www.mulesoft.org/schema/mule/edifact/current/mule-edifact.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <flow name="orders-to-edifact">
+        <http:listener config-ref="HTTP_Listener_config" path="/orders/to-edifact" allowedMethods="GET">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[{'Content-Type': 'application/json'}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+            </http:error-response>
+        </http:listener>
+        <set-variable variableName="sourceFile" value="#[attributes.queryParams.file default '']"/>
+        <choice>
+            <when expression="#[['orders-accepted.json', 'orders-accepted.xml', 'orders-rejected.json', 'orders-rejected.xml'] contains vars.sourceFile]">
+                <ee:transform doc:name="Load canonical sample">
+                    <ee:variables>
+                        <ee:set-variable variableName="order"><![CDATA[%dw 2.0
+output application/java
+fun asList(value) = if (value is Array) value else if (value == null) [] else [value]
+var body = readUrl("classpath://samples/canonical/" ++ vars.sourceFile, if (vars.sourceFile endsWith ".xml") "application/xml" else "application/json")
+var order = if (body.purchaseOrder?) body.purchaseOrder else body
+---
+order update {
+    lines: asList(order.lines),
+    reasons: asList(order.reasons)
+}]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+                <choice>
+                    <when expression="#[vars.order.status == 'ACCEPTED']">
+                        <ee:transform doc:name="Build EDIFACT structure">
+                            <ee:message>
+                                <ee:set-payload resource="dw/orders-to-edifact.dwl"/>
+                            </ee:message>
+                        </ee:transform>
+                        <edifact:write config-ref="EDIFACT_Config" doc:name="Write ORDERS"/>
+                        <set-variable variableName="edifactText" value="#[payload as String]"/>
+                        <set-variable variableName="edifactFile" value="#['orders-accepted.from-' ++ ((vars.sourceFile splitBy '.')[-1]) ++ '.edi']"/>
+                        <file:write config-ref="Order_File_Config" path="#['outbox/' ++ vars.edifactFile]">
+                            <file:content>#[vars.edifactText]</file:content>
+                        </file:write>
+                        <set-payload value="#[vars.edifactText]"/>
+                        <edifact:read config-ref="EDIFACT_Config" doc:name="Read written ORDERS"/>
+                        <ee:transform doc:name="Round trip">
+                            <ee:variables>
+                                <ee:set-variable variableName="roundTripOrder" resource="dw/purchase-order.dwl"/>
+                            </ee:variables>
+                        </ee:transform>
+                        <ee:transform doc:name="HTTP response">
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var sameLines = sizeOf(vars.order.lines) == sizeOf(vars.roundTripOrder.lines)
+    and isEmpty(vars.order.lines filter (line, index) ->
+        (line.itemId as String) != (vars.roundTripOrder.lines[index].itemId as String)
+        or (line.quantity as Number) != (vars.roundTripOrder.lines[index].quantity as Number)
+        or (line.unitPrice as Number) != (vars.roundTripOrder.lines[index].unitPrice as Number))
+---
+{
+    sourceFile: vars.sourceFile,
+    poNumber: vars.order.poNumber,
+    status: vars.order.status,
+    edifactFile: "outbox/" ++ vars.edifactFile,
+    roundTripMatched: (vars.order.poNumber as String) == (vars.roundTripOrder.poNumber as String)
+        and (vars.order.currency as String) == (vars.roundTripOrder.currency as String)
+        and sameLines,
+    edifact: vars.edifactText
+}]]></ee:set-payload>
+                            </ee:message>
+                        </ee:transform>
+                    </when>
+                    <otherwise>
+                        <ee:transform doc:name="Not sent">
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    sourceFile: vars.sourceFile,
+    poNumber: vars.order.poNumber,
+    status: vars.order.status,
+    reasons: vars.order.reasons,
+    edifactFile: null
+}]]></ee:set-payload>
+                            </ee:message>
+                        </ee:transform>
+                    </otherwise>
+                </choice>
+            </when>
+            <otherwise>
+                <set-variable variableName="httpStatus" value="400"/>
+                <ee:transform doc:name="Unknown sample">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    message: "Unknown sample file. Use orders-accepted.json, orders-accepted.xml, orders-rejected.json, or orders-rejected.xml."
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </otherwise>
+        </choice>
+        <error-handler ref="orders-error-handler"/>
+    </flow>
+</mule>
