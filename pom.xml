@@ -13,8 +13,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-		<app.runtime>4.12.5</app.runtime>
-		<mule.maven.plugin.version>4.10.3</mule.maven.plugin.version>
+		<app.runtime>4.12.2</app.runtime>
+		<mule.maven.plugin.version>4.10.1</mule.maven.plugin.version>
 	</properties>
 
 	<build>
@@ -33,6 +33,12 @@
 					<systemPropertyVariables>
 						<file.baseDir>${project.basedir}/data</file.baseDir>
 					</systemPropertyVariables>
+					<sharedLibraries>
+						<sharedLibrary>
+							<groupId>net.i2p.crypto</groupId>
+							<artifactId>eddsa</artifactId>
+						</sharedLibrary>
+					</sharedLibraries>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -61,6 +67,23 @@
 			<groupId>com.mulesoft.connectors</groupId>
 			<artifactId>mule-edifact-extension</artifactId>
 			<version>3.0.0</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-sftp-connector</artifactId>
+			<version>2.7.4</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>net.i2p.crypto</groupId>
+			<artifactId>eddsa</artifactId>
+			<version>0.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-ftp-connector</artifactId>
+			<version>2.0.4</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>

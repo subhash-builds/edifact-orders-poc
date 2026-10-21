@@ -31,11 +31,11 @@
 output application/java
 fun asList(value) = if (value is Array) value else if (value == null) [] else [value]
 var body = readUrl("classpath://samples/canonical/" ++ vars.sourceFile, if (vars.sourceFile endsWith ".xml") "application/xml" else "application/json")
-var order = if (body.purchaseOrder?) body.purchaseOrder else body
+var canonicalOrder = if (body.purchaseOrder?) body.purchaseOrder else body
 ---
-order update {
-    lines: asList(order.lines),
-    reasons: asList(order.reasons)
+canonicalOrder ++ {
+    lines: asList(canonicalOrder.lines),
+    reasons: asList(canonicalOrder.reasons)
 }]]></ee:set-variable>
                     </ee:variables>
                 </ee:transform>

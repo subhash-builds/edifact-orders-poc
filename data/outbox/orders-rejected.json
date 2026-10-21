@@ -1,0 +1,39 @@
+{
+  "sender": "HARBOR",
+  "receiver": "NORTHWIND",
+  "messageReference": "2",
+  "poNumber": "PO-1002",
+  "orderDate": "20261021",
+  "requestedDeliveryDate": "20261120",
+  "buyer": {
+    "id": "HARBOR",
+    "name": "Harbor Retail"
+  },
+  "supplier": {
+    "id": "NORTHWIND",
+    "name": "Northwind Telecom Supplies"
+  },
+  "currency": "PHP",
+  "lines": [
+    {
+      "lineNumber": "1",
+      "itemId": "SKU100",
+      "quantity": 0,
+      "unitPrice": 500,
+      "lineAmount": 0
+    },
+    {
+      "lineNumber": "2",
+      "itemId": "SKU900",
+      "quantity": 200,
+      "unitPrice": 1000,
+      "lineAmount": 200000
+    }
+  ],
+  "orderTotal": 200000,
+  "status": "REJECTED",
+  "reasons": [
+    "INVALID_QUANTITY",
+    "CREDIT_LIMIT_EXCEEDED"
+  ]
+}

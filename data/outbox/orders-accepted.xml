@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<purchaseOrder>
+  <sender>HARBOR</sender>
+  <receiver>NORTHWIND</receiver>
+  <messageReference>1</messageReference>
+  <poNumber>PO-1001</poNumber>
+  <orderDate>20261021</orderDate>
+  <requestedDeliveryDate>20261115</requestedDeliveryDate>
+  <buyer>
+    <id>HARBOR</id>
+    <name>Harbor Retail</name>
+  </buyer>
+  <supplier>
+    <id>NORTHWIND</id>
+    <name>Northwind Telecom Supplies</name>
+  </supplier>
+  <currency>PHP</currency>
+  <lines>
+    <lineNumber>1</lineNumber>
+    <itemId>SKU100</itemId>
+    <quantity>10</quantity>
+    <unitPrice>1500</unitPrice>
+    <lineAmount>15000</lineAmount>
+  </lines>
+  <lines>
+    <lineNumber>2</lineNumber>
+    <itemId>SKU200</itemId>
+    <quantity>4</quantity>
+    <unitPrice>2500</unitPrice>
+    <lineAmount>10000</lineAmount>
+  </lines>
+  <orderTotal>25000</orderTotal>
+  <status>ACCEPTED</status>
+  <reasons/>
+</purchaseOrder>

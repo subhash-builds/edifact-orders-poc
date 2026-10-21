@@ -3,7 +3,7 @@ http:
   port: "8081"
 
 file:
-  baseDir: "C:/Work/01_Projects/impact/practice/data"
+  baseDir: "C:/Work/01_Projects/impact/edifact-orders-poc/data"
 
 rules:
   currency: "PHP"

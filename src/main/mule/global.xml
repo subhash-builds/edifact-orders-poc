@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:file="http://www.mulesoft.org/schema/mule/file"
+<mule xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+      xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+      xmlns:file="http://www.mulesoft.org/schema/mule/file"
       xmlns:edifact="http://www.mulesoft.org/schema/mule/edifact"
       xmlns:http="http://www.mulesoft.org/schema/mule/http"
       xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
       xmlns="http://www.mulesoft.org/schema/mule/core"
-      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
         http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
         http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
         http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
         http://www.mulesoft.org/schema/mule/edifact http://www.mulesoft.org/schema/mule/edifact/current/mule-edifact.xsd
-        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd">
 
     <configuration-properties file="config.yaml"/>
 
@@ -25,11 +27,17 @@
 
     <edifact:config name="EDIFACT_Config" requireUniqueInterchanges="false">
         <edifact:schemas>
-            <edifact:schema value="/schemas/orders-d96a.esl"/>
+            <edifact:schema value="/edifact/d96a/ORDERS.esl"/>
         </edifact:schemas>
     </edifact:config>
 
-    <error-handler name="orders-error-handler">
+    <sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="db58f7c5-1fcd-47d5-9690-23e9fc8f1056" >
+		<sftp:connection host="ap-southeast-1.sftpcloud.io" username="cf9af1d61fcd4f379e30ab8c2c6ab141" password="X7tq0fQjKY2rBmcUTbbZnuDIkovYpvNt" identityFile="/edifact-orders-poc/src/main/resources/keys/cf9af1d61fcd4f379e30ab8c2c6ab141-11680.pem"/>
+	</sftp:config>
+	<ftp:config name="FTP_Config" doc:name="FTP Config" doc:id="0fe55233-a68c-4ba1-8332-ddb9a70caaf3" >
+		<ftp:connection transferMode="ASCII" host="ap-southeast-1.sftpcloud.io" username="cf9af1d61fcd4f379e30ab8c2c6ab141" password="X7tq0fQjKY2rBmcUTbbZnuDIkovYpvNt" />
+	</ftp:config>
+	<error-handler name="orders-error-handler">
         <on-error-continue type="ANY" logException="true">
             <ee:transform doc:name="Error response">
                 <ee:message>
