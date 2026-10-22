@@ -1,0 +1,115 @@
+{
+  "info": {
+    "name": "EDIFACT Orders POC",
+    "description": "Upload project samples to SFTP, then read an EDIFACT order or write one from JSON. Run the upload requests before the order requests. Set baseUrl if the app is not on port 8081.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    }
+  ],
+  "item": [
+    {
+      "name": "Upload samples",
+      "item": [
+        {
+          "name": "Upload orders-accepted.edi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/upload-sample?file=orders-accepted.edi",
+            "description": "Copies samples/orders-accepted.edi to edi/orders-accepted.edi."
+          }
+        },
+        {
+          "name": "Upload orders-rejected.edi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/upload-sample?file=orders-rejected.edi",
+            "description": "Copies samples/orders-rejected.edi to edi/orders-rejected.edi."
+          }
+        },
+        {
+          "name": "Upload orders-accepted.json",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/upload-sample?file=orders-accepted.json",
+            "description": "Copies samples/canonical/orders-accepted.json to jsonXmlFiles/orders-accepted.json."
+          }
+        },
+        {
+          "name": "Upload orders-rejected.json",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/upload-sample?file=orders-rejected.json",
+            "description": "Copies samples/canonical/orders-rejected.json to jsonXmlFiles/orders-rejected.json."
+          }
+        },
+        {
+          "name": "Upload orders-accepted.xml",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/upload-sample?file=orders-accepted.xml",
+            "description": "Copies samples/canonical/orders-accepted.xml to jsonXmlFiles/orders-accepted.xml."
+          }
+        },
+        {
+          "name": "Upload orders-rejected.xml",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/upload-sample?file=orders-rejected.xml",
+            "description": "Copies samples/canonical/orders-rejected.xml to jsonXmlFiles/orders-rejected.xml."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Read accepted EDIFACT",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/from-edifact?file=orders-accepted.edi",
+            "description": "Reads edi/orders-accepted.edi and writes JSON and XML into inboundResults."
+          }
+        },
+        {
+          "name": "Read rejected EDIFACT",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/from-edifact?file=orders-rejected.edi",
+            "description": "Reads edi/orders-rejected.edi and writes JSON and XML into inboundResults."
+          }
+        },
+        {
+          "name": "Write accepted order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/to-edifact?file=orders-accepted.json",
+            "description": "Reads jsonXmlFiles/orders-accepted.json and writes outboundResults/orders-accepted.edi."
+          }
+        },
+        {
+          "name": "Write rejected order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/to-edifact?file=orders-rejected.json",
+            "description": "Reads jsonXmlFiles/orders-rejected.json and writes outboundResults/orders-rejected.edi."
+          }
+        }
+      ]
+    }
+  ]
+}
