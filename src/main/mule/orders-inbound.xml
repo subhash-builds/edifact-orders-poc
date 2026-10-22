@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file"
+      xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+      xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
       xmlns:edifact="http://www.mulesoft.org/schema/mule/edifact"
       xmlns:http="http://www.mulesoft.org/schema/mule/http"
       xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
       xmlns="http://www.mulesoft.org/schema/mule/core"
-      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
         http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
         http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
         http://www.mulesoft.org/schema/mule/edifact http://www.mulesoft.org/schema/mule/edifact/current/mule-edifact.xsd
         http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-        http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd">
+        http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
 
-    <flow name="orders-from-edifact">
+    <file:config name="File_Config" doc:name="File Config" doc:id="9301c782-49bf-4398-8348-a7bc1ad07086" />
+	<flow name="orders-from-edifact">
         <http:listener config-ref="HTTP_Listener_config" path="/orders/from-edifact" allowedMethods="GET">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers>#[{'Content-Type': 'application/json'}]</http:headers>
@@ -24,18 +27,18 @@
         </http:listener>
         <set-variable variableName="sourceFile" value="#[attributes.queryParams.file default '']"/>
         <set-variable variableName="baseName" value="#[(vars.sourceFile splitBy '.')[0]]"/>
-        <sftp:read config-ref="SFTP_Config" doc:name="Read EDI" path="#[p('sftp.edi') ++ '/' ++ vars.sourceFile]" outputMimeType="text/plain"/>
+		<sftp:read doc:name="Read EDI" path="#[p('sftp.edi') ++ '/' ++ vars.sourceFile]" outputMimeType="text/plain" config-ref="SFTP_Config"/>
         <edifact:read config-ref="EDIFACT_Config" doc:name="Read ORDERS"/>
         <ee:transform doc:name="Map purchase order">
             <ee:variables>
                 <ee:set-variable variableName="order" resource="dw/purchase-order.dwl"/>
             </ee:variables>
         </ee:transform>
-        <sftp:write config-ref="SFTP_Config" doc:name="Write JSON" path="#[p('sftp.inboundResults') ++ '/' ++ vars.baseName ++ '.json']">
-            <sftp:content>#[output application/json --- vars.order]</sftp:content>
+        <sftp:write doc:name="Write JSON" path="#[p('sftp.inboundResults') ++ '/' ++ vars.baseName ++ '.json']" config-ref="SFTP_Config">
+            <sftp:content><![CDATA[#[output application/json --- vars.order]]]></sftp:content>
         </sftp:write>
-        <sftp:write config-ref="SFTP_Config" doc:name="Write XML" path="#[p('sftp.inboundResults') ++ '/' ++ vars.baseName ++ '.xml']">
-            <sftp:content>#[output application/xml --- { purchaseOrder: vars.order }]</sftp:content>
+        <sftp:write doc:name="Write XML" path="#[p('sftp.inboundResults') ++ '/' ++ vars.baseName ++ '.xml']" config-ref="SFTP_Config">
+            <sftp:content><![CDATA[#[output application/xml --- { purchaseOrder: vars.order }]]]></sftp:content>
         </sftp:write>
         <ee:transform doc:name="HTTP response">
             <ee:message>

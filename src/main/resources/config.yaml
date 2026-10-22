@@ -8,6 +8,10 @@ sftp:
   inboundResults: "inboundResults"
   jsonXmlFiles: "jsonXmlFiles"
   outboundResults: "outboundResults"
+  host: "tgh8.files.com"
+  port: "22"
+  username: "srisurya.durgaprasad@techygeekhub.com_4"
+  password: "Chagallu@630"
 
 rules:
   currency: "PHP"

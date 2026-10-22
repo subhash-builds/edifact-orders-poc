@@ -24,7 +24,7 @@
         </http:listener>
         <set-variable variableName="sourceFile" value="#[attributes.queryParams.file default '']"/>
         <set-variable variableName="edifactFile" value="#[(vars.sourceFile splitBy '.')[0] ++ '.edi']"/>
-        <sftp:read config-ref="SFTP_Config" doc:name="Read canonical file" path="#[p('sftp.jsonXmlFiles') ++ '/' ++ vars.sourceFile]" outputMimeType="text/plain"/>
+        <sftp:read doc:name="Read canonical file" path="#[p('sftp.jsonXmlFiles') ++ '/' ++ vars.sourceFile]" outputMimeType="text/plain" config-ref="SFTP_Config"/>
         <ee:transform doc:name="Load canonical order">
             <ee:variables>
                 <ee:set-variable variableName="order"><![CDATA[%dw 2.0
@@ -46,8 +46,8 @@ canonicalOrder ++ {
         </ee:transform>
         <edifact:write config-ref="EDIFACT_Config" doc:name="Write ORDERS"/>
         <set-variable variableName="edifactText" value="#[payload as String]"/>
-        <sftp:write config-ref="SFTP_Config" doc:name="Write EDI" path="#[p('sftp.outboundResults') ++ '/' ++ vars.edifactFile]">
-            <sftp:content>#[vars.edifactText]</sftp:content>
+        <sftp:write doc:name="Write EDI" path="#[p('sftp.outboundResults') ++ '/' ++ vars.edifactFile]" config-ref="SFTP_Config">
+            <sftp:content><![CDATA[#[vars.edifactText]]]></sftp:content>
         </sftp:write>
         <set-payload value="#[vars.edifactText]"/>
         <edifact:read config-ref="EDIFACT_Config" doc:name="Read written ORDERS"/>

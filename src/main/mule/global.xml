@@ -26,13 +26,12 @@ http://www.mulesoft.org/schema/mule/ftps http://www.mulesoft.org/schema/mule/ftp
         </edifact:schemas>
     </edifact:config>
 
-    <sftp:config name="SFTP_Config" doc:name="SFTP Config">
-        <sftp:connection host="ap-southeast-1.sftpcloud.io" username="edifact-orders" password="u1gEIrSOwozd1SfAKKQugdccJA3dgWes" identityFile="C:/Work/01_Projects/impact/edifact-orders-poc/src/main/resources/keys/edifact-orders-11682.pem"/>
-    </sftp:config>
-
     <ftps:config name="FTPS_Config" doc:name="FTPS Config" doc:id="5691f492-eaf6-4c23-b03e-f2e83a4f7932" >
 		<ftps:connection host="ap-southeast-1.sftpcloud.io" username="edifact-orders" password="u1gEIrSOwozd1SfAKKQugdccJA3dgWes" />
 	</ftps:config>
+	<sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="01d688d5-7dc6-4313-aeb6-70d2b34333f1" >
+		<sftp:connection username="${sftp.username}" password="${sftp.password}" host="${sftp.host}" port="${sftp.port}"/>
+	</sftp:config>
 	<error-handler name="orders-error-handler">
         <on-error-continue type="ANY" logException="true">
             <ee:transform doc:name="Error response">
