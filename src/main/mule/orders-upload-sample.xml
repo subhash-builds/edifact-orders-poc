@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:ftps="http://www.mulesoft.org/schema/mule/ftps"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+        http://www.mulesoft.org/schema/mule/ftps http://www.mulesoft.org/schema/mule/ftps/current/mule-ftps.xsd">
+
+    <flow name="orders-upload-sample">
+        <http:listener config-ref="HTTP_Listener_config" path="/orders/upload-sample" allowedMethods="GET">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[{'Content-Type': 'application/json'}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+            </http:error-response>
+        </http:listener>
+        <set-variable variableName="sourceFile" value="#[attributes.queryParams.file default '']"/>
+        <ee:transform doc:name="Load project sample">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+var extension = (vars.sourceFile splitBy ".")[-1]
+var projectPath = if (extension == "edi")
+    "classpath://samples/" ++ vars.sourceFile
+else
+    "classpath://samples/canonical/" ++ vars.sourceFile
+---
+readUrl(projectPath, "text/plain")]]></ee:set-payload>
+            </ee:message>
+            <ee:variables>
+                <ee:set-variable variableName="sftpPath"><![CDATA[%dw 2.0
+output application/java
+var extension = (vars.sourceFile splitBy ".")[-1]
+var directory = if (extension == "edi") p("sftp.edi") else p("sftp.jsonXmlFiles")
+---
+directory ++ "/" ++ vars.sourceFile]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <ftps:write config-ref="FTPS_Config" doc:name="Write sample" path="#[vars.sftpPath]">
+            <ftps:content>#[payload]</ftps:content>
+        </ftps:write>
+        <ee:transform doc:name="HTTP response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    sourceFile: vars.sourceFile,
+    sftpPath: vars.sftpPath
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <error-handler ref="orders-error-handler"/>
+    </flow>
+</mule>
