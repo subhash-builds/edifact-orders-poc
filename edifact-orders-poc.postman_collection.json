@@ -11,66 +11,7 @@
     }
   ],
   "item": [
-    {
-      "name": "Upload samples",
-      "item": [
-        {
-          "name": "Upload orders-accepted.edi",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/orders/upload-sample?file=orders-accepted.edi",
-            "description": "Copies samples/orders-accepted.edi to edi/orders-accepted.edi."
-          }
-        },
-        {
-          "name": "Upload orders-rejected.edi",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/orders/upload-sample?file=orders-rejected.edi",
-            "description": "Copies samples/orders-rejected.edi to edi/orders-rejected.edi."
-          }
-        },
-        {
-          "name": "Upload orders-accepted.json",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/orders/upload-sample?file=orders-accepted.json",
-            "description": "Copies samples/canonical/orders-accepted.json to jsonXmlFiles/orders-accepted.json."
-          }
-        },
-        {
-          "name": "Upload orders-rejected.json",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/orders/upload-sample?file=orders-rejected.json",
-            "description": "Copies samples/canonical/orders-rejected.json to jsonXmlFiles/orders-rejected.json."
-          }
-        },
-        {
-          "name": "Upload orders-accepted.xml",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/orders/upload-sample?file=orders-accepted.xml",
-            "description": "Copies samples/canonical/orders-accepted.xml to jsonXmlFiles/orders-accepted.xml."
-          }
-        },
-        {
-          "name": "Upload orders-rejected.xml",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/orders/upload-sample?file=orders-rejected.xml",
-            "description": "Copies samples/canonical/orders-rejected.xml to jsonXmlFiles/orders-rejected.xml."
-          }
-        }
-      ]
-    },
-    {
+   {
       "name": "Orders",
       "item": [
         {

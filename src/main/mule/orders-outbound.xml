@@ -22,10 +22,11 @@
                 <http:body>#[payload]</http:body>
             </http:error-response>
         </http:listener>
-        <set-variable variableName="sourceFile" value="#[attributes.queryParams.file default '']"/>
-        <set-variable variableName="edifactFile" value="#[(vars.sourceFile splitBy '.')[0] ++ '.edi']"/>
-        <sftp:read doc:name="Read canonical file" path="#[p('sftp.jsonXmlFiles') ++ '/' ++ vars.sourceFile]" outputMimeType="text/plain" config-ref="SFTP_Config"/>
-        <ee:transform doc:name="Load canonical order">
+        <logger level="INFO" doc:name="Start Logger" doc:id="af2ff458-34c0-44a7-8fd3-63d636551399" message='#["orders-to-edifact flow start"]' />
+		<set-variable variableName="sourceFile" value="#[attributes.queryParams.file default '']" doc:name="Set sourceFile Variable"/>
+        <set-variable variableName="edifactFile" value="#[(vars.sourceFile splitBy '.')[0] ++ '.edi']" doc:name="Set edifactFile Variable"/>
+        <sftp:read doc:name="Read Canonical File" path="#[p('sftp.jsonXmlFiles') ++ '/' ++ vars.sourceFile]" outputMimeType="text/plain" config-ref="SFTP_Config"/>
+        <ee:transform doc:name="Load Canonical Order">
             <ee:variables>
                 <ee:set-variable variableName="order"><![CDATA[%dw 2.0
 output application/java
@@ -39,32 +40,20 @@ canonicalOrder ++ {
 }]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <ee:transform doc:name="Build EDIFACT structure">
+        <ee:transform doc:name="Build EDIFACT Structure">
             <ee:message>
                 <ee:set-payload resource="dw/orders-to-edifact.dwl"/>
             </ee:message>
         </ee:transform>
-        <edifact:write config-ref="EDIFACT_Config" doc:name="Write ORDERS"/>
-        <set-variable variableName="edifactText" value="#[payload as String]"/>
+		<edifact:write config-ref="EDIFACT_Config" doc:name="Write ORDERS"/>
+        <set-variable variableName="edifactText" value="#[payload as String]" doc:name="Set  edifactText Variable"/>
         <sftp:write doc:name="Write EDI" path="#[p('sftp.outboundResults') ++ '/' ++ vars.edifactFile]" config-ref="SFTP_Config">
             <sftp:content><![CDATA[#[vars.edifactText]]]></sftp:content>
         </sftp:write>
-        <set-payload value="#[vars.edifactText]"/>
-        <edifact:read config-ref="EDIFACT_Config" doc:name="Read written ORDERS"/>
-        <ee:transform doc:name="Round trip">
-            <ee:variables>
-                <ee:set-variable variableName="roundTripOrder" resource="dw/purchase-order.dwl"/>
-            </ee:variables>
-        </ee:transform>
-        <ee:transform doc:name="HTTP response">
+        <ee:transform doc:name="HTTP Response">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
-var sameLines = sizeOf(vars.order.lines) == sizeOf(vars.roundTripOrder.lines)
-    and isEmpty(vars.order.lines filter (line, index) ->
-        (line.itemId as String) != (vars.roundTripOrder.lines[index].itemId as String)
-        or (line.quantity as Number) != (vars.roundTripOrder.lines[index].quantity as Number)
-        or (line.unitPrice as Number) != (vars.roundTripOrder.lines[index].unitPrice as Number))
 ---
 {
     sourceFile: vars.sourceFile,
@@ -72,13 +61,11 @@ var sameLines = sizeOf(vars.order.lines) == sizeOf(vars.roundTripOrder.lines)
     status: vars.order.status,
     reasons: vars.order.reasons,
     edifactFile: p('sftp.outboundResults') ++ "/" ++ vars.edifactFile,
-    roundTripMatched: (vars.order.poNumber as String) == (vars.roundTripOrder.poNumber as String)
-        and (vars.order.currency as String) == (vars.roundTripOrder.currency as String)
-        and sameLines,
     edifact: vars.edifactText
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
-        <error-handler ref="orders-error-handler"/>
+        <logger level="INFO" doc:name="End Logger" doc:id="2062ce5f-351b-4f2f-bce9-a6c9404d97f6" message='#["orders-to-edifact flow end"]' />
+		<error-handler ref="orders-error-handler"/>
     </flow>
 </mule>

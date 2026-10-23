@@ -4,8 +4,10 @@ http:
 
 sftp:
   identityFile: "C:/Work/01_Projects/impact/edifact-orders-poc/src/main/resources/keys/edifact-orders-11682.pem"
-  edi: "edi"
-  inboundResults: "inboundResults"
+  harborInboundRequests: "harborInboundRequests"
+  northwindInboundResults: 
+    json: "northwindInboundResults/json"
+    xml: "northwindInboundResults/xml"
   jsonXmlFiles: "jsonXmlFiles"
   outboundResults: "outboundResults"
   host: "tgh8.files.com"

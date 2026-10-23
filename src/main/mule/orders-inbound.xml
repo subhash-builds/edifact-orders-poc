@@ -26,46 +26,51 @@ http://www.mulesoft.org/schema/mule/solace http://www.mulesoft.org/schema/mule/s
                 <http:body>#[payload]</http:body>
             </http:error-response>
         </http:listener>
-		<set-variable variableName="sourceFile" value="#[attributes.queryParams.file default '']" />
-		<set-variable variableName="baseName" value="#[(vars.sourceFile splitBy '.')[0]]" />
-		<sftp:read doc:name="Read EDI" path="#[p('sftp.edi') ++ '/' ++ vars.sourceFile]" outputMimeType="text/plain" config-ref="SFTP_Config"/>
+		<logger level="INFO" doc:name="Start Logger" doc:id="c7e4d416-db61-454d-86f5-6bb44e2f6684" message='#["orders-from-edifact flow start"]'/>
+		<set-variable variableName="sourceFile" value="#[attributes.queryParams.file default '']" doc:name="Set sourceFile Variable"/>
+		<set-variable variableName="baseName" value="#[(vars.sourceFile splitBy '.')[0]]" doc:name="Set baseName Variable"/>
+		<sftp:read doc:name="Read EDI" path="#[p('sftp.harborInboundRequests') ++ '/' ++ vars.sourceFile]" outputMimeType="text/plain" config-ref="SFTP_Config"/>
         <edifact:read config-ref="EDIFACT_Config" doc:name="Read ORDERS"/>
-		<ee:transform doc:name="Map purchase order">
+		<ee:transform doc:name="Map Purchase Order">
             <ee:variables>
                 <ee:set-variable variableName="order" resource="dw/purchase-order.dwl"/>
             </ee:variables>
         </ee:transform>
-        <choice doc:name="Choice" doc:id="32649b0c-f670-4f86-9907-32bf177d6843" >
-			<when expression='#[vars.order.sender == "HARBOR"]'>
-				<scatter-gather doc:name="Scatter-Gather" doc:id="1a1144ed-709a-4a3d-8c68-3bcbcd8dccc7" >
-					<route >
-						<solace:publish doc:name="Publish" doc:id="a347e59b-cd34-4e47-a587-d66693d71bc0" />
-						<logger level="INFO" doc:name="Logger" doc:id="8163626a-eacb-46f0-b233-0eec043d5bcb" />
+		<scatter-gather doc:name="Scatter-Gather for Json &amp; XML" doc:id="f9b4eff5-3fca-462c-91dd-7129986b8d05" >
+			<route >
+				<scatter-gather doc:name="Scatter-Gather for Queue &amp; SFTP" doc:id="1a1144ed-709a-4a3d-8c68-3bcbcd8dccc7">
+					<route>
+						<solace:publish doc:name="Publish Json Message" doc:id="a347e59b-cd34-4e47-a587-d66693d71bc0" config-ref="Solace_PubSub__Connector_Config" destinationType="QUEUE" address="northwind-json-inbound-results">
+							<solace:message >
+								<solace:body ><![CDATA[#[output application/json --- vars.order]]]></solace:body>
+							</solace:message>
+						</solace:publish>
 					</route>
-					<route >
-						<sftp:write doc:name="Write JSON" path="#[p('sftp.inboundResults') ++ '/' ++ vars.baseName ++ '.json']" config-ref="SFTP_Config">
+					<route>
+						<sftp:write doc:name="Write JSON" path="#[p('sftp.northwindInboundResults.json') ++ '/' ++ vars.baseName ++ '.json']" config-ref="SFTP_Config">
             <sftp:content><![CDATA[#[output application/json --- vars.order]]]></sftp:content>
         </sftp:write>
-						<logger level="INFO" doc:name="Logger" doc:id="26b5c06d-eb77-4f33-9cd9-80c20cc4f804" />
 					</route>
 				</scatter-gather>
-			</when>
-			<otherwise >
-				<scatter-gather doc:name="Scatter-Gather" doc:id="b88c4bce-8169-4a7d-8d7e-d5691139f0bb" >
-					<route >
-						<solace:publish doc:name="Publish" doc:id="9dd82014-e9b3-415d-a7b0-2bd4d9e6fca1" />
-						<logger level="INFO" doc:name="Logger" doc:id="b726a8bd-eda1-4baf-b265-e174b2d08494" />
+			</route>
+			<route >
+				<scatter-gather doc:name="Scatter-Gather for Queue &amp; SFTP" doc:id="b88c4bce-8169-4a7d-8d7e-d5691139f0bb">
+					<route>
+						<solace:publish doc:name="Publish XML Message" doc:id="9dd82014-e9b3-415d-a7b0-2bd4d9e6fca1" config-ref="Solace_PubSub__Connector_Config" destinationType="QUEUE" address="northwind-xml-inbound-results">
+							<solace:message >
+								<solace:body ><![CDATA[#[output application/xml --- { purchaseOrder: vars.order }]]]></solace:body>
+							</solace:message>
+						</solace:publish>
 					</route>
-					<route >
-						<sftp:write doc:name="Write XML" path="#[p('sftp.inboundResults') ++ '/' ++ vars.baseName ++ '.xml']" config-ref="SFTP_Config">
+					<route>
+						<sftp:write doc:name="Write XML" path="#[p('sftp.northwindInboundResults.xml') ++ '/' ++ vars.baseName ++ '.xml']" config-ref="SFTP_Config">
             <sftp:content><![CDATA[#[output application/xml --- { purchaseOrder: vars.order }]]]></sftp:content>
         </sftp:write>
-						<logger level="INFO" doc:name="Logger" doc:id="74a2d30e-f1dd-4af7-9643-64840f24a5cb" />
 					</route>
 				</scatter-gather>
-			</otherwise>
-		</choice>
-        <ee:transform doc:name="HTTP response">
+			</route>
+		</scatter-gather>
+        <ee:transform doc:name="HTTP Response">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -74,18 +79,13 @@ output application/json
     sourceFile: vars.sourceFile,
     order: vars.order,
     files: {
-        json: p('sftp.inboundResults') ++ "/" ++ vars.baseName ++ ".json",
-        xml: p('sftp.inboundResults') ++ "/" ++ vars.baseName ++ ".xml"
+        json: p('sftp.northwindInboundResults.json') ++ "/" ++ vars.baseName ++ ".json",
+        xml: p('sftp.northwindInboundResults.xml') ++ "/" ++ vars.baseName ++ ".xml"
     }
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
-        <error-handler ref="orders-error-handler"/>
+        <logger level="INFO" doc:name="End Logger" doc:id="45c97af2-bf3a-49c4-9fdd-67eb9afcab28" message='#["orders-from-edifact flow end"]' />
+		<error-handler ref="orders-error-handler"/>
     </flow>
-	<flow name="orders-inboundFlow" doc:id="4c2cfaa8-cba9-4948-bfab-cf7917c2973e" >
-		<solace:topic-listener topics="" doc:name="Direct Topic Subscriber" doc:id="c92b389d-6a35-41a2-bffd-1a06c66b0ae5" />
-	</flow>
-	<flow name="orders-inboundFlow1" doc:id="5c20e10a-3a40-4952-989c-41a6510a6e56" >
-		<solace:topic-listener topics="" doc:name="Direct Topic Subscriber" doc:id="76952c9b-852b-470c-9ace-9b1b473317b5" />
-	</flow>
 </mule>
