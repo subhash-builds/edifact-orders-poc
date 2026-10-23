@@ -136,6 +136,12 @@
 			<artifactId>eddsa</artifactId>
 			<version>0.3.0</version>
 		</dependency>
+		<dependency>
+			<groupId>com.solace.connector</groupId>
+			<artifactId>solace-mulesoft-connector</artifactId>
+			<version>1.8.1</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
 	</dependencies>
 
 	<repositories>

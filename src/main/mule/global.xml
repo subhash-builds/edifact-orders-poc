@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:ftps="http://www.mulesoft.org/schema/mule/ftps"
+<mule xmlns:solace="http://www.mulesoft.org/schema/mule/solace"
+      xmlns:ftps="http://www.mulesoft.org/schema/mule/ftps"
       xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
       xmlns:edifact="http://www.mulesoft.org/schema/mule/edifact"
       xmlns:http="http://www.mulesoft.org/schema/mule/http"
       xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
       xmlns="http://www.mulesoft.org/schema/mule/core"
-      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
         http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
         http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
         http://www.mulesoft.org/schema/mule/edifact http://www.mulesoft.org/schema/mule/edifact/current/mule-edifact.xsd
         http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
         http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
-http://www.mulesoft.org/schema/mule/ftps http://www.mulesoft.org/schema/mule/ftps/current/mule-ftps.xsd">
+http://www.mulesoft.org/schema/mule/ftps http://www.mulesoft.org/schema/mule/ftps/current/mule-ftps.xsd
+http://www.mulesoft.org/schema/mule/solace http://www.mulesoft.org/schema/mule/solace/current/mule-solace.xsd">
 
     <configuration-properties file="config.yaml"/>
 
@@ -32,6 +33,9 @@ http://www.mulesoft.org/schema/mule/ftps http://www.mulesoft.org/schema/mule/ftp
 	<sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="01d688d5-7dc6-4313-aeb6-70d2b34333f1" >
 		<sftp:connection username="${sftp.username}" password="${sftp.password}" host="${sftp.host}" port="${sftp.port}"/>
 	</sftp:config>
+	<solace:config name="Solace_PubSub__Connector_Config" doc:name="Solace PubSub+ Connector Config" doc:id="d7aa3bcb-151b-4a81-84a5-e200feafb07b" >
+		<solace:connection clientUserName="${solace.username}" password="${solace.password}" msgVPN="${solace.vpn}" brokerHost="${solace.host}" />
+	</solace:config>
 	<error-handler name="orders-error-handler">
         <on-error-continue type="ANY" logException="true">
             <ee:transform doc:name="Error response">

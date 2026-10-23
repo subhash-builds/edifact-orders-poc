@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:file="http://www.mulesoft.org/schema/mule/file"
+<mule xmlns:solace="http://www.mulesoft.org/schema/mule/solace"
+      xmlns:file="http://www.mulesoft.org/schema/mule/file"
       xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
       xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
       xmlns:edifact="http://www.mulesoft.org/schema/mule/edifact"
       xmlns:http="http://www.mulesoft.org/schema/mule/http"
       xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-      xmlns="http://www.mulesoft.org/schema/mule/core"
-      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+      xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
         http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
         http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
         http://www.mulesoft.org/schema/mule/edifact http://www.mulesoft.org/schema/mule/edifact/current/mule-edifact.xsd
         http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
         http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
 http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
-http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/solace http://www.mulesoft.org/schema/mule/solace/current/mule-solace.xsd">
 
     <file:config name="File_Config" doc:name="File Config" doc:id="9301c782-49bf-4398-8348-a7bc1ad07086" />
 	<flow name="orders-from-edifact">
@@ -25,21 +26,45 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
                 <http:body>#[payload]</http:body>
             </http:error-response>
         </http:listener>
-        <set-variable variableName="sourceFile" value="#[attributes.queryParams.file default '']"/>
-        <set-variable variableName="baseName" value="#[(vars.sourceFile splitBy '.')[0]]"/>
+		<set-variable variableName="sourceFile" value="#[attributes.queryParams.file default '']" />
+		<set-variable variableName="baseName" value="#[(vars.sourceFile splitBy '.')[0]]" />
 		<sftp:read doc:name="Read EDI" path="#[p('sftp.edi') ++ '/' ++ vars.sourceFile]" outputMimeType="text/plain" config-ref="SFTP_Config"/>
         <edifact:read config-ref="EDIFACT_Config" doc:name="Read ORDERS"/>
-        <ee:transform doc:name="Map purchase order">
+		<ee:transform doc:name="Map purchase order">
             <ee:variables>
                 <ee:set-variable variableName="order" resource="dw/purchase-order.dwl"/>
             </ee:variables>
         </ee:transform>
-        <sftp:write doc:name="Write JSON" path="#[p('sftp.inboundResults') ++ '/' ++ vars.baseName ++ '.json']" config-ref="SFTP_Config">
+        <choice doc:name="Choice" doc:id="32649b0c-f670-4f86-9907-32bf177d6843" >
+			<when expression='#[vars.order.sender == "HARBOR"]'>
+				<scatter-gather doc:name="Scatter-Gather" doc:id="1a1144ed-709a-4a3d-8c68-3bcbcd8dccc7" >
+					<route >
+						<solace:publish doc:name="Publish" doc:id="a347e59b-cd34-4e47-a587-d66693d71bc0" />
+						<logger level="INFO" doc:name="Logger" doc:id="8163626a-eacb-46f0-b233-0eec043d5bcb" />
+					</route>
+					<route >
+						<sftp:write doc:name="Write JSON" path="#[p('sftp.inboundResults') ++ '/' ++ vars.baseName ++ '.json']" config-ref="SFTP_Config">
             <sftp:content><![CDATA[#[output application/json --- vars.order]]]></sftp:content>
         </sftp:write>
-        <sftp:write doc:name="Write XML" path="#[p('sftp.inboundResults') ++ '/' ++ vars.baseName ++ '.xml']" config-ref="SFTP_Config">
+						<logger level="INFO" doc:name="Logger" doc:id="26b5c06d-eb77-4f33-9cd9-80c20cc4f804" />
+					</route>
+				</scatter-gather>
+			</when>
+			<otherwise >
+				<scatter-gather doc:name="Scatter-Gather" doc:id="b88c4bce-8169-4a7d-8d7e-d5691139f0bb" >
+					<route >
+						<solace:publish doc:name="Publish" doc:id="9dd82014-e9b3-415d-a7b0-2bd4d9e6fca1" />
+						<logger level="INFO" doc:name="Logger" doc:id="b726a8bd-eda1-4baf-b265-e174b2d08494" />
+					</route>
+					<route >
+						<sftp:write doc:name="Write XML" path="#[p('sftp.inboundResults') ++ '/' ++ vars.baseName ++ '.xml']" config-ref="SFTP_Config">
             <sftp:content><![CDATA[#[output application/xml --- { purchaseOrder: vars.order }]]]></sftp:content>
         </sftp:write>
+						<logger level="INFO" doc:name="Logger" doc:id="74a2d30e-f1dd-4af7-9643-64840f24a5cb" />
+					</route>
+				</scatter-gather>
+			</otherwise>
+		</choice>
         <ee:transform doc:name="HTTP response">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
@@ -57,4 +82,10 @@ output application/json
         </ee:transform>
         <error-handler ref="orders-error-handler"/>
     </flow>
+	<flow name="orders-inboundFlow" doc:id="4c2cfaa8-cba9-4948-bfab-cf7917c2973e" >
+		<solace:topic-listener topics="" doc:name="Direct Topic Subscriber" doc:id="c92b389d-6a35-41a2-bffd-1a06c66b0ae5" />
+	</flow>
+	<flow name="orders-inboundFlow1" doc:id="5c20e10a-3a40-4952-989c-41a6510a6e56" >
+		<solace:topic-listener topics="" doc:name="Direct Topic Subscriber" doc:id="76952c9b-852b-470c-9ace-9b1b473317b5" />
+	</flow>
 </mule>

@@ -12,6 +12,12 @@ sftp:
   port: "22"
   username: "srisurya.durgaprasad@techygeekhub.com_4"
   password: "Chagallu@630"
+  
+solace:
+  username: "solace-cloud-client"
+  password: "duidhquc2ar7t3mbsaoe90ppu8"
+  vpn: "mulesoft"
+  host: "wss://mr-connection-rctj01oxo6g.messaging.solace.cloud:443"
 
 rules:
   currency: "PHP"
